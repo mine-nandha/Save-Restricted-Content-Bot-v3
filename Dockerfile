@@ -1,29 +1,13 @@
-# Stage 1: Build
-FROM python:3.10-alpine as builder
-
-WORKDIR /install
-
-# Install build dependencies
-RUN apk add --no-cache build-base gcc musl-dev libffi-dev ffmpeg git curl bash neofetch
-
-COPY requirements.txt .
-
-RUN pip install --upgrade pip && \
-    pip wheel --no-cache-dir --wheel-dir /install/wheels -r requirements.txt
-
----
-
-# Stage 2: Runtime
-FROM python:3.10-alpine
-
-# Install runtime deps only
-RUN apk add --no-cache ffmpeg git curl bash neofetch
+FROM python:3.10-slim
 
 WORKDIR /app
 
-COPY --from=builder /install/wheels /wheels
-COPY --from=builder /install/requirements.txt .
-RUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt
+RUN apt update && apt install -y ffmpeg git curl bash gcc g++ python3-dev libffi-dev
+
+COPY requirements.txt .
+
+RUN pip install --upgrade pip wheel && \
+    pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
